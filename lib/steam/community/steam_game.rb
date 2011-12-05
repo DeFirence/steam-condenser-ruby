@@ -5,6 +5,7 @@
 
 require 'steam/community/game_leaderboard'
 require 'steam/community/game_stats'
+require 'steam/community/web_api'
 
 # This class represents a game available on Steam
 #
@@ -58,6 +59,18 @@ class SteamGame
   # @return [Array<GameLeaderboard>] The leaderboards for this game
   def leaderboards
     GameLeaderboard.leaderboards @short_name
+  end
+
+  # Returns whether the given version of this game is up-to-date
+  #
+  # @param [Fixnum] version The version to check against the Web API
+  # @return [Boolean] `true` if the given version is up-to-date
+  def uptodate?(version)
+    params = { :appid => @app_id, :version => version }
+    result = WebApi.json 'ISteamApps', 'UpToDateCheck', 1, params
+    result = MultiJson.decode(result, { :symbolize_keys => true})[:response]
+    raise SteamCondenserError, result[:error] unless result[:success]
+    result[:up_to_date]
   end
 
   # Creates a stats object for the given user and this game
